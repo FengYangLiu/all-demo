@@ -31,4 +31,13 @@ v4.30
 2. HMR 不适用于生产环境，这意味着它应当用于开发环境。
 3. `webpack`内置了 热替换插件`HotModuleReplacementPlugin`
 4. 可以在nodejs的API中使用热替换
-5. 热替换事件绑定后热更新后还是老的事件，热替换容易让人失误，但是有很多插件支持热替换比如``
+5. 热替换事件绑定后热更新后还是老的事件，热替换容易让人失误，但是有很多插件支持热替换
+
+## tree shaking
+
+这部分主要是删除多余的代码和在生产环境中压缩代码，其主要有几点
+
+1. 使用 ES2015 模块语法（即 import 和 export）。
+2. 确保没有 compiler 将 ES2015 模块语法转换为 CommonJS 模块
+3. 在项目 package.json 文件中，添加一个 "sideEffects" 属性。
+4. 通过将 mode 选项设置为 production，启用 minification(代码压缩) 和 tree shaking。

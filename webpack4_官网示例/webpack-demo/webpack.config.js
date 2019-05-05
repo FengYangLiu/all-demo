@@ -5,6 +5,9 @@ const webpack = require('webpack');
 
 module.exports = {
     mode: 'development',
+    optimization: {
+        usedExports: true
+    },
     entry: {
         app: './src/index.js'
     },
