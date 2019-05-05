@@ -24,3 +24,11 @@ v4.30
 3. `webpack --watch` 模式在有依赖更改的时候会进行跟着变化，但是要刷新浏览器
 4. `webpack-dev-server` 可以解决不用刷新浏览器
 5. `webpack-dev-middleware`是一个封装器(wrapper)，它可以把 webpack 处理过的文件发送到一个 server。 webpack-dev-server 在内部使用了它，然而它也可以作为一个单独的 package 来使用，以便根据需求进行更多自定义设置。
+
+## 模块热替换
+
+1. 模块热替换(hot module replacement 或 HMR)是 webpack 提供的最有用的功能之一。它允许在运行时更新所有类型的模块，而无需完全刷新
+2. HMR 不适用于生产环境，这意味着它应当用于开发环境。
+3. `webpack`内置了 热替换插件`HotModuleReplacementPlugin`
+4. 可以在nodejs的API中使用热替换
+5. 热替换事件绑定后热更新后还是老的事件，热替换容易让人失误，但是有很多插件支持热替换比如``
