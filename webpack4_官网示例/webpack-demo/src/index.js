@@ -3,6 +3,10 @@ import printMe from './print.js';
 import './styles.css';
 import { cube } from './math.js';
 
+if (process.env.NODE_ENV !== 'production') {
+    console.log('Looks like we are in development mode!');
+}
+
 function component() {
     let element = document.createElement('div');
 
@@ -27,7 +31,7 @@ let element = component(); // 存储 element，以在 print.js 修改时重新�
 document.body.appendChild(element);
 
 if (module.hot) {
-    module.hot.accept('./print.js', function() {
+    module.hot.accept('./print.js', function () {
         console.log('Accepting the updated printMe module!');
         // printMe();
         document.body.removeChild(element);

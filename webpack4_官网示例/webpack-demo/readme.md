@@ -41,3 +41,14 @@ v4.30
 2. 确保没有 compiler 将 ES2015 模块语法转换为 CommonJS 模块
 3. 在项目 package.json 文件中，添加一个 "sideEffects" 属性。
 4. 通过将 mode 选项设置为 production，启用 minification(代码压缩) 和 tree shaking。
+
+## 生产环境
+
+生产环境与开发环境的需求不一致，有极大的区别，可以通过`webpack-merge`来区分编写后合并
+
+1. 区分生产和开发环境通过`webpack-merge`来编写公共与区分两者
+2. 在`npm script` 区分使用配置和设置环境mode，早期使用`process.env.NODE_ENV`，webpack4内部通过mode来处理实际一样
+3. webpack4 生产环境默认会压缩
+4. 生产环境与开发环境的source map 不一样
+5. 最小css和压缩一样
+6. 可以通过cli来代替
