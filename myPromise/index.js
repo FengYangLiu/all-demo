@@ -16,12 +16,21 @@ let promise = new Promise((resolve, reject) => {
     // 两个回调函数那个先执行就执行那个，且只能执行一个
     console.log('立即执行！')
     // throw new Error('xx') // 如果抛出错误则相当于调用了reject
-    resolve(1)
+    // resolve(1)
     // reject(2)
+    setTimeout(() => {
+        // 异步状态下，不能和同步一样需要保存等待状态的函数
+        resolve(1)
+    }, 1000)
     // reject(1)
 
 })
 
+promise.then(val => {
+    console.log(val)
+})
+
+// 同一个promise可以走多次所以存储函数的时候需要用数组来保存
 promise.then(val => {
     console.log(val)
 })

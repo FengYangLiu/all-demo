@@ -7,12 +7,17 @@ class Promise {
         this.status = PENGDING // 存在一个状态
         this.value = void 0 // 成功后的值
         this.reason = void 0 // 失败的值
+        this.onResolvedCallbacks = [] // 存储所有成功回调（一个promise对象有可能有多个then）
+        this.onRejectedCallbacks = [] // 存储所有失败
+
         // 成功回调
         const resolve = (value) => {
-            console.log(this.status,value)
             if (this.status === PENGDING) { // 只能从等待转换状态
                 this.status = FULFILLED
                 this.value = value
+
+                // 将数组中的成功方法依次调用 订阅
+                this.onResolvedCallbacks.forEach(fn => fn())
             }
         }
 
@@ -21,6 +26,9 @@ class Promise {
             if (this.status === PENGDING) {
                 this.status = REJECTED
                 this.reason = reason
+
+                // 将失败的方法依次调用
+                this.onRejectedCallbacks.forEach(fn => fn())
             }
         }
         try { // 在执行这个函数的时候有可能会抛出错误，则会reject掉
@@ -44,6 +52,16 @@ class Promise {
             onRejected(this.reason)
         }
 
+        if (this.status === PENGDING){
+            /**
+             * 当resolve是异步的时候，promise的状态没发生改变,需要保存
+             * 这里需要发布订阅模式来进行操作，在异步的时候发布
+             */
+            this.onResolvedCallbacks.push(() => onFulfilled(this.value))
+
+            this.onRejectedCallbacks.push(() => onRejected(this.reason))
+            
+        }
     }
 }
 
