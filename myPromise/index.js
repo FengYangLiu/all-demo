@@ -44,5 +44,5 @@ let promise2 = new Promise((resolve, reject) => {
 // 在promise中如果返回this是不能实现的，因为每个promise状态改变后就不能被改变了
 // 官方文档中是返回新的一个Promise的实例对象promise2
 promise2
-    .then(val => {console.log(val)})
+    .then(val => val)
     .then(val => {console.log(val)})

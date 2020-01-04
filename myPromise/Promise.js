@@ -2,9 +2,45 @@ const PENGDING = 'Pending' // 等待态
 const FULFILLED = 'Fulfilled' // 成功态
 const REJECTED = 'Rejected' // 失败态
 
-// promise2
-function resolvePromise(promise2, x, resolve, reject){
-    resolve(x)
+/**
+ * 提取处理then函数中的公共方法
+ * 规范2.3中的处理then的方法
+ * @param {Promise} promise2 then后的promise对象
+ * @param {Any} x x时一个合法的js值
+ * @param {Function}} resolve 成功回调
+ * @param {Function} reject 失败回调
+ */
+function resolvePromise(promise2, x, resolve, reject) {
+    if (promise2 === x) { // 规范2.3.1 promise2 和 x是同一个引用则抛出typeError
+        // 实际上这里 promise2 如果和 x 是同一个引用以为值自己引用自己造成循环引用
+        return reject(new TypeError('循环引用'));
+    }
+
+    // 判断x的类型 是为了兼容其他人的promise中的then方法
+    if ((x !== null && typeof x === 'object') || typeof x === 'function') { // 规范2.3.3
+        let then = x.then // 规范 2.3.3.1
+        try {
+            if (typeof then === 'function') {
+                // 规范2.3.3.3
+                then.call(x, y => { //2.3.3.3.1
+                    resolvePromise(promise2,y,resolve,reject); // 递归
+                }, r => {//2.3.3.3.2
+                    reject(r)
+                }) 
+            } else { // 规范 2.3.3.4 不是函数，是一个对象，直接resolve()
+                // 有可能是这种
+                // let obj = { 
+                //     then: {}
+                // }
+                resolve(x)
+            }
+        } catch (e) { // 规范2.3.3.2  then跑错则reject(e)
+            reject(e)
+        }
+    } else { // 2.3.4 x不是一个对象或者函数则直接resove(x)
+        // x 是个常量
+        resolve(x)
+    }
 }
 
 class Promise {
@@ -55,41 +91,63 @@ class Promise {
         let promise2 = new Promise((resolve, reject) => {
 
             if (this.status === FULFILLED) {
-                setTimeout(()=>{
-                    let x = onFulfilled(this.value)
-                    resolvePromise(promise2, x, resolve, reject)
+                /**
+                 * 这里用setTime是为了异步，是因为执行回调时promise2还未生成，需要异步先生成promise2
+                 * 并且规范中2.2.4 onFulfilled, onRejected这两个回调没有不能在本次执行上下文中调用
+                 */
+                setTimeout(() => {
+                    try { // 确保then中抛出错误作为reject来处理
+                        let x = onFulfilled(this.value)
+                        resolvePromise(promise2, x, resolve, reject)
+                    } catch (err) {
+                        reject(err);
+                    }
+
                 })
             }
-    
-            if(this.status === REJECTED){
-                setTimeout(()=>{
-                    let x = onRejected(this.reason)
-                    resolvePromise(promise2, x, resolve, reject)
+
+            if (this.status === REJECTED) {
+                setTimeout(() => {
+                    try {
+                        let x = onRejected(this.reason)
+                        resolvePromise(promise2, x, resolve, reject)
+                    } catch (error) {
+                        reject(error)
+                    }
                 })
             }
-    
-            if (this.status === PENGDING){
+
+            if (this.status === PENGDING) {
                 /**
                  * 当resolve是异步的时候，promise的状态没发生改变,需要保存
                  * 这里需要发布订阅模式来进行操作，在异步的时候发布
                  */
                 this.onResolvedCallbacks.push(() => {
-                    setTimeout(()=>{
-                        let x = onFulfilled(this.value)
-                        resolvePromise(promise2, x, resolve, reject)
+                    setTimeout(() => {
+                        try {
+                            let x = onFulfilled(this.value)
+                            resolvePromise(promise2, x, resolve, reject)
+                        } catch (error) {
+                            reject(error)
+                        }
+
                     })
                 })
-    
-                this.onRejectedCallbacks.push(() =>{ 
-                    setTimeout(()=>{
-                        let x = onRejected(this.reason)
-                        resolvePromise(promise2, x, resolve, reject)
+
+                this.onRejectedCallbacks.push(() => {
+                    setTimeout(() => {
+                        try {
+                            let x = onRejected(this.reason)
+                            resolvePromise(promise2, x, resolve, reject)
+                        } catch (error) {
+                            reject(error)
+                        }
                     })
                 })
-                
+
             }
         })
-        
+
         return promise2
     }
 }
