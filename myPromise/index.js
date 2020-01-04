@@ -11,26 +11,38 @@ const Promise = require('./Promise')
 
 
 // Promise 一般用法
-let promise = new Promise((resolve, reject) => {
-    // 直接调用
-    // 两个回调函数那个先执行就执行那个，且只能执行一个
-    console.log('立即执行！')
-    // throw new Error('xx') // 如果抛出错误则相当于调用了reject
-    // resolve(1)
-    // reject(2)
-    setTimeout(() => {
-        // 异步状态下，不能和同步一样需要保存等待状态的函数
-        resolve(1)
-    }, 1000)
-    // reject(1)
+// let promise = new Promise((resolve, reject) => {
+//     // 直接调用
+//     // 两个回调函数那个先执行就执行那个，且只能执行一个
+//     console.log('立即执行！')
+//     // throw new Error('xx') // 如果抛出错误则相当于调用了reject
+//     // resolve(1)
+//     // reject(2)
+//     setTimeout(() => {
+//         // 异步状态下，不能和同步一样需要保存等待状态的函数
+//         resolve(1)
+//     }, 1000)
+//     // reject(1)
 
+// })
+
+// promise.then(val => {
+//     // console.log(val)
+// })
+
+// // 同一个promise可以走多次所以存储函数的时候需要用数组来保存
+// promise.then(val => {
+//     // console.log(val)
+// })
+
+
+let promise2 = new Promise((resolve, reject) => {
+    resolve(1)
 })
 
-promise.then(val => {
-    console.log(val)
-})
-
-// 同一个promise可以走多次所以存储函数的时候需要用数组来保存
-promise.then(val => {
-    console.log(val)
-})
+// 如何实现和jQuery一样的链式调用，JQ中实现链式调用是返回this来达到责任链的功能
+// 在promise中如果返回this是不能实现的，因为每个promise状态改变后就不能被改变了
+// 官方文档中是返回新的一个Promise的实例对象promise2
+promise2
+    .then(val => {console.log(val)})
+    .then(val => {console.log(val)})

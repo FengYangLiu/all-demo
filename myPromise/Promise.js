@@ -2,6 +2,11 @@ const PENGDING = 'Pending' // 等待态
 const FULFILLED = 'Fulfilled' // 成功态
 const REJECTED = 'Rejected' // 失败态
 
+// promise2
+function resolvePromise(promise2, x, resolve, reject){
+    resolve(x)
+}
+
 class Promise {
     constructor(executor) {
         this.status = PENGDING // 存在一个状态
@@ -44,24 +49,48 @@ class Promise {
         onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : () => {}
         onRejected = typeof onRejected === 'function' ? onRejected : () => {}
 
-        if (this.status === FULFILLED) {
-            onFulfilled(this.value)
-        }
+        // 如何实现和jQuery一样的链式调用，JQ中实现链式调用是返回this来达到责任链的功能
+        // 在promise中如果返回this是不能实现的，因为每个promise状态改变后就不能被改变了
+        // 官方文档中是返回新的一个Promise的实例对象promise2，让当前then可以继续then
+        let promise2 = new Promise((resolve, reject) => {
 
-        if(this.status === REJECTED){
-            onRejected(this.reason)
-        }
-
-        if (this.status === PENGDING){
-            /**
-             * 当resolve是异步的时候，promise的状态没发生改变,需要保存
-             * 这里需要发布订阅模式来进行操作，在异步的时候发布
-             */
-            this.onResolvedCallbacks.push(() => onFulfilled(this.value))
-
-            this.onRejectedCallbacks.push(() => onRejected(this.reason))
-            
-        }
+            if (this.status === FULFILLED) {
+                setTimeout(()=>{
+                    let x = onFulfilled(this.value)
+                    resolvePromise(promise2, x, resolve, reject)
+                })
+            }
+    
+            if(this.status === REJECTED){
+                setTimeout(()=>{
+                    let x = onRejected(this.reason)
+                    resolvePromise(promise2, x, resolve, reject)
+                })
+            }
+    
+            if (this.status === PENGDING){
+                /**
+                 * 当resolve是异步的时候，promise的状态没发生改变,需要保存
+                 * 这里需要发布订阅模式来进行操作，在异步的时候发布
+                 */
+                this.onResolvedCallbacks.push(() => {
+                    setTimeout(()=>{
+                        let x = onFulfilled(this.value)
+                        resolvePromise(promise2, x, resolve, reject)
+                    })
+                })
+    
+                this.onRejectedCallbacks.push(() =>{ 
+                    setTimeout(()=>{
+                        let x = onRejected(this.reason)
+                        resolvePromise(promise2, x, resolve, reject)
+                    })
+                })
+                
+            }
+        })
+        
+        return promise2
     }
 }
 
