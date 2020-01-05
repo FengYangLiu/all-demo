@@ -15,18 +15,22 @@ function resolvePromise(promise2, x, resolve, reject) {
         // 实际上这里 promise2 如果和 x 是同一个引用以为值自己引用自己造成循环引用
         return reject(new TypeError('循环引用'));
     }
-
+    let called; // 规范2.3.3.3.3 如果同resolve和reject 多次调用 取第一次调用的
     // 判断x的类型 是为了兼容其他人的promise中的then方法
-    if ((x !== null && typeof x === 'object') || typeof x === 'function') { // 规范2.3.3
-        let then = x.then // 规范 2.3.3.1
+    if ((x != null && typeof x === 'object') || typeof x === 'function') { // 规范2.3.3
         try {
+            let then = x.then // 规范 2.3.3.1
             if (typeof then === 'function') {
                 // 规范2.3.3.3
                 then.call(x, y => { //2.3.3.3.1
-                    resolvePromise(promise2,y,resolve,reject); // 递归
-                }, r => {//2.3.3.3.2
+                    if (called) return
+                    called = true
+                    resolvePromise(promise2, y, resolve, reject); // 递归
+                }, r => { //2.3.3.3.2
+                    if (called) return
+                    called = true
                     reject(r)
-                }) 
+                })
             } else { // 规范 2.3.3.4 不是函数，是一个对象，直接resolve()
                 // 有可能是这种
                 // let obj = { 
@@ -35,6 +39,8 @@ function resolvePromise(promise2, x, resolve, reject) {
                 resolve(x)
             }
         } catch (e) { // 规范2.3.3.2  then跑错则reject(e)
+            if (called) return
+            called = true // 以防then中返回promise对象且不是自己的和多次调用成功和失败回调
             reject(e)
         }
     } else { // 2.3.4 x不是一个对象或者函数则直接resove(x)
@@ -82,8 +88,9 @@ class Promise {
     // then有两个回调一个是成功回调，另一个则是失败回调
     then(onFulfilled, onRejected) {
         // 规范 2.2.1 参数可选，回调函数不是函数则忽略
-        onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : () => {}
-        onRejected = typeof onRejected === 'function' ? onRejected : () => {}
+        // 这里可以处理then的穿透 如 promise.then().then().then() 的操作
+        onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : val => val 
+        onRejected = typeof onRejected === 'function' ? onRejected : err => {throw err}
 
         // 如何实现和jQuery一样的链式调用，JQ中实现链式调用是返回this来达到责任链的功能
         // 在promise中如果返回this是不能实现的，因为每个promise状态改变后就不能被改变了
@@ -150,6 +157,17 @@ class Promise {
 
         return promise2
     }
+}
+
+// 希望测试一下这个库是否符合我们的promise A+规范
+// promises-aplus-tests
+Promise.defer = Promise.deferred = function () {
+    let dfd = {};
+    dfd.promise = new Promise((resolve, reject) => {
+        dfd.resolve = resolve;
+        dfd.reject = reject;
+    });
+    return dfd;
 }
 
 module.exports = Promise
