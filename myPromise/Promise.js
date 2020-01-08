@@ -167,15 +167,15 @@ class Promise {
     // then的简写
     catch (errCallback) {
         return this.then(null, errCallback)
-    }
-    
-    finally(callback) {
+    } finally(callback) {
         let P = this.constructor;
         return this.then(
-          value  => P.resolve(callback()).then(() => value),
-          reason => P.resolve(callback()).then(() => { throw reason })
+            value => P.resolve(callback()).then(() => value),
+            reason => P.resolve(callback()).then(() => {
+                throw reason
+            })
         );
-      };
+    };
 
     // 静态， 直接创建一个成功的promise
     static resolve(val) {
@@ -190,6 +190,47 @@ class Promise {
             reject(reason)
         })
     }
+
+    static all(allArr = []) {
+        return new Promise((resolve, reject) => {
+            let arr = []
+            let count = 0
+            function processData(key, value) {
+                arr[key] = value
+                if (++count === allArr.length) {
+                    resolve(arr)
+                }
+            }
+            for (let i = 0; i < allArr.length; i++) {
+                const current = allArr[i]
+                const then = current.then
+                if (then && typeof then === 'function') {
+                    then.call(current, y => {
+                        processData(i, y)
+                    }, reject) // 报错则结束
+                } else {
+                    processData(i, current)
+                }
+            }
+        })
+    }
+
+    static rece(allArr = []) {
+        return new Promise((resolve, reject) => {
+            for (let i = 0; i < allArr.length; i++) {
+                const current = allArr[i]
+                const then = current.then
+                if (then && typeof then === 'function') {
+                    then.call(current, y => {
+                        resolve(y)
+                    }, reject) // 报错则结束
+                } else {
+                    resolve(current)
+                }
+            }
+        })
+    }
+    
 }
 
 // 希望测试一下这个库是否符合我们的promise A+规范
