@@ -59,6 +59,10 @@ class Promise {
 
         // 成功回调
         const resolve = (value) => {
+            // 分析value是否是Promise的实例，如果是则等待结果，非规范
+            if (value instanceof Promise) {
+                return value.then(resolve, reject)
+            }
             if (this.status === PENGDING) { // 只能从等待转换状态
                 this.status = FULFILLED
                 this.value = value
@@ -89,8 +93,10 @@ class Promise {
     then(onFulfilled, onRejected) {
         // 规范 2.2.1 参数可选，回调函数不是函数则忽略
         // 这里可以处理then的穿透 如 promise.then().then().then() 的操作
-        onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : val => val 
-        onRejected = typeof onRejected === 'function' ? onRejected : err => {throw err}
+        onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : val => val
+        onRejected = typeof onRejected === 'function' ? onRejected : err => {
+            throw err
+        }
 
         // 如何实现和jQuery一样的链式调用，JQ中实现链式调用是返回this来达到责任链的功能
         // 在promise中如果返回this是不能实现的，因为每个promise状态改变后就不能被改变了
@@ -157,10 +163,37 @@ class Promise {
 
         return promise2
     }
+
+    // then的简写
+    catch (errCallback) {
+        return this.then(null, errCallback)
+    }
+    
+    finally(callback) {
+        let P = this.constructor;
+        return this.then(
+          value  => P.resolve(callback()).then(() => value),
+          reason => P.resolve(callback()).then(() => { throw reason })
+        );
+      };
+
+    // 静态， 直接创建一个成功的promise
+    static resolve(val) {
+        return new Promise((resolve, reject) => {
+            resolve(val)
+        })
+    }
+
+    // 静态，直接创建一个失败的promise
+    static reject(reason) {
+        return new Promise((resolve, reject) => {
+            reject(reason)
+        })
+    }
 }
 
 // 希望测试一下这个库是否符合我们的promise A+规范
-// promises-aplus-tests
+// npx promises-aplus-tests Promise.js
 Promise.defer = Promise.deferred = function () {
     let dfd = {};
     dfd.promise = new Promise((resolve, reject) => {

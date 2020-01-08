@@ -45,4 +45,35 @@ let promise2 = new Promise((resolve, reject) => {
 // 官方文档中是返回新的一个Promise的实例对象promise2
 promise2
     .then(val => val)
-    .then(val => {console.log(val)})
+    .then(val => {
+        console.log(val)
+    })
+    .then(val => {
+        throw 111
+    })
+    // catch 方法可以拦截错误，但是不会阻止运行
+    //实际上 catch就是then的简写
+    // then(null, err => {throw err})
+    .catch(err => console.log(err))
+    .then(val => console.log(val))
+
+
+// 如果promise 中resove的是一个 Promise实例呢么则会吧resolve实例的成功值(并且会等待)
+let p = new Promise((resolve, reject) => {
+    resolve(new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve(100)
+        }, 1000)
+    }))
+})
+p.then(val => console.log(val)).finally(() => {
+    console.log('finally')
+})
+
+Promise.resolve('Promise.resolve').then(val => {
+    console.log(val)
+})
+
+Promise.reject('Promise.reject').catch(err => {
+    console.log(err)
+})
